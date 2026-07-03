@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: tradeledger
+    env: node
+    rootDir: server
+    buildCommand: cd ../client && npm install && npm run build && cd ../server && npm install && npx prisma generate && npx prisma migrate deploy
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NOMBA_BASE_URL
+        value: https://sandbox.nomba.com/v1
+      - key: NOMBA_CLIENT_ID
+        sync: false
+      - key: NOMBA_CLIENT_SECRET
+        sync: false
+      - key: NOMBA_ACCOUNT_ID
+        sync: false
+      - key: NOMBA_WEBHOOK_SECRET
+        sync: false
+      - key: NOMBA_SUB_ACCOUNT_ID
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: tradeledger-db
+          property: connectionString
+
+databases:
+  - name: tradeledger-db
+    databaseName: tradeledger
+    plan: free

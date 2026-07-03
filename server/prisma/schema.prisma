@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Merchant {
+  id            String   @id @default(cuid())
+  customerId    String   @unique
+  name          String
+  email         String
+  phone         String
+  bankCode      String
+  accountNumber String
+  accountName   String
+  status        String   @default("onboarded")
+  createdAt     DateTime @default(now())
+
+  scores            CreditScore[]
+  advances          Advance[]
+  buyerAccounts     BuyerAccount[]
+  checkoutPayments  CheckoutPayment[]
+  recurringCharges  RecurringCharge[]
+  checkoutFailures  CheckoutFailure[]
+  recurringFailures RecurringFailure[]
+}
+
+model CreditScore {
+  id            String   @id @default(cuid())
+  merchantId    String
+  score         Int
+  eligible      Boolean
+  breakdown     Json
+  weeklyRevenue Int
+  reason        String?
+  createdAt     DateTime @default(now())
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+  advance  Advance?
+}
+
+model Advance {
+  id            String    @id @default(cuid())
+  merchantId    String
+  scoreId       String    @unique
+  mandateId     String    @unique
+  subAccountId  String
+  amount        Int
+  balance       Int
+  repaymentRate Float     @default(0.15)
+  status        String    @default("pending_consent")
+  createdAt     DateTime  @default(now())
+  settledAt     DateTime?
+
+  merchant   Merchant    @relation(fields: [merchantId], references: [id])
+  score      CreditScore @relation(fields: [scoreId], references: [id])
+  repayments Repayment[]
+  transfers  Transfer[]
+}
+
+model Repayment {
+  id              String   @id @default(cuid())
+  advanceId       String
+  amount          Int
+  weekRevenue     Int
+  mandateDebitRef String   @unique
+  status          String
+  retryCount      Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  advance Advance @relation(fields: [advanceId], references: [id])
+}
+
+model Transfer {
+  id            String   @id @default(cuid())
+  advanceId     String
+  merchantTxRef String   @unique
+  amount        Int
+  bankCode      String
+  accountNumber String
+  accountName   String
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+
+  advance Advance @relation(fields: [advanceId], references: [id])
+}
+
+model WebhookEvent {
+  id        String   @id @default(cuid())
+  requestId String   @unique
+  event     String
+  payload   Json
+  processed Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model BuyerAccount {
+  id                    String         @id @default(cuid())
+  merchantId            String
+  nombaVirtualAccountId String         @unique
+  customerReference     String
+  accountNumber         String
+  bankCode              String
+  status                String         @default("active")
+  closedAt              DateTime?
+  defaultAmountExpected Int?
+  createdAt             DateTime       @default(now())
+  merchant              Merchant       @relation(fields: [merchantId], references: [id])
+  payments              BuyerPayment[]
+}
+
+model BuyerPayment {
+  id                   String       @id @default(cuid())
+  buyerAccountId       String
+  amount               Int
+  payer                String
+  receivedAt           DateTime
+  webhookRequestId     String       @unique
+  reconciliationStatus String       @default("exact")
+  amountExpected       Int?
+  surplus              Int?
+  shortfall            Int?
+  senderAccountNumber  String?
+  createdAt            DateTime     @default(now())
+  buyerAccount         BuyerAccount @relation(fields: [buyerAccountId], references: [id])
+}
+
+model UnmatchedPayment {
+  id               String   @id @default(cuid())
+  nombaAccountId   String
+  amount           Int
+  senderName       String?
+  senderAccount    String?
+  webhookRequestId String   @unique
+  createdAt        DateTime @default(now())
+}
+
+model CheckoutPayment {
+  id               String   @id @default(cuid())
+  merchantId       String
+  amount           Int
+  orderId          String   @unique
+  webhookRequestId String   @unique
+  createdAt        DateTime @default(now())
+  merchant         Merchant @relation(fields: [merchantId], references: [id])
+}
+
+model RecurringCharge {
+  id               String   @id @default(cuid())
+  merchantId       String
+  amount           Int
+  tokenId          String
+  webhookRequestId String   @unique
+  createdAt        DateTime @default(now())
+  merchant         Merchant @relation(fields: [merchantId], references: [id])
+}
+
+model CheckoutFailure {
+  id               String   @id @default(cuid())
+  merchantId       String
+  orderId          String?
+  amount           Int?
+  failureReason    String?
+  webhookRequestId String   @unique
+  createdAt        DateTime @default(now())
+  merchant         Merchant @relation(fields: [merchantId], references: [id])
+}
+
+model RecurringFailure {
+  id                  String   @id @default(cuid())
+  merchantId          String
+  tokenId             String
+  amount              Int?
+  failureReason       String?
+  consecutiveFailures Int      @default(1)
+  webhookRequestId    String   @unique
+  createdAt           DateTime @default(now())
+  merchant            Merchant @relation(fields: [merchantId], references: [id])
+}
