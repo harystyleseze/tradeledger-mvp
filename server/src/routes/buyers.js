@@ -249,4 +249,128 @@ router.delete("/accounts/:id", async (req, res) => {
   res.status(204).end();
 });
 
+// GET /buyers/insights/:merchantId — buyer payment analytics for the merchant dashboard
+// Returns reliability ranking, revenue concentration, payment timeline, and cash flow predictability
+router.get("/insights/:merchantId", async (req, res) => {
+  const { merchantId } = req.params;
+
+  const accounts = await db.buyerAccount.findMany({
+    where: { merchantId },
+    include: {
+      payments: { orderBy: { receivedAt: "asc" } },
+    },
+  });
+
+  if (accounts.length === 0) {
+    return res.json({
+      buyerCount: 0,
+      activeBuyerCount: 0,
+      reliability: [],
+      concentration: [],
+      topBuyerPercent: 0,
+      concentrationWarning: false,
+      timeline: [],
+      weeklyAverageNaira: 0,
+      predictability: "none",
+      predictabilityScore: 0,
+    });
+  }
+
+  // --- Reliability ranking ---
+  const reliability = accounts
+    .filter((ba) => ba.payments.length > 0)
+    .map((ba) => {
+      const exact = ba.payments.filter((p) => p.reconciliationStatus === "exact").length;
+      const under = ba.payments.filter((p) => p.reconciliationStatus === "under").length;
+      const over = ba.payments.filter((p) => p.reconciliationStatus === "over").length;
+      const total = ba.payments.length;
+      return {
+        buyerName: ba.customerReference,
+        exact,
+        under,
+        over,
+        total,
+        exactRate: total > 0 ? Math.round((exact / total) * 100) : 0,
+        totalShortfallNaira: ba.payments.reduce((s, p) => s + (p.shortfall ?? 0), 0) / 100,
+      };
+    })
+    .sort((a, b) => b.exactRate - a.exactRate);
+
+  // --- Revenue concentration ---
+  const totalDVARevenue = accounts.reduce(
+    (sum, ba) => sum + ba.payments.reduce((s, p) => s + p.amount, 0),
+    0
+  );
+
+  const concentration = accounts
+    .map((ba) => {
+      const revenue = ba.payments.reduce((s, p) => s + p.amount, 0);
+      return {
+        buyerName: ba.customerReference,
+        revenueNaira: revenue / 100,
+        percent: totalDVARevenue > 0 ? Math.round((revenue / totalDVARevenue) * 100) : 0,
+      };
+    })
+    .filter((c) => c.revenueNaira > 0)
+    .sort((a, b) => b.percent - a.percent);
+
+  const topBuyerPercent = concentration[0]?.percent ?? 0;
+
+  // --- Payment timeline (group by ISO week) ---
+  const allPayments = accounts.flatMap((ba) => ba.payments);
+  const weekMap = new Map();
+
+  for (const p of allPayments) {
+    const d = new Date(p.receivedAt);
+    // Compute ISO week key: YYYY-Www
+    const jan4 = new Date(d.getFullYear(), 0, 4);
+    const dayOfYear = Math.floor((d - new Date(d.getFullYear(), 0, 1)) / 86400000);
+    const weekNum = Math.ceil((dayOfYear + jan4.getDay() + 1) / 7);
+    const weekKey = `${d.getFullYear()}-W${String(weekNum).padStart(2, "0")}`;
+
+    if (!weekMap.has(weekKey)) {
+      weekMap.set(weekKey, { week: weekKey, totalNaira: 0, paymentCount: 0 });
+    }
+    const w = weekMap.get(weekKey);
+    w.totalNaira += p.amount / 100;
+    w.paymentCount++;
+  }
+
+  const timeline = Array.from(weekMap.values()).sort((a, b) => a.week.localeCompare(b.week));
+
+  // --- Cash flow predictability ---
+  const weeklyAmounts = timeline.map((w) => w.totalNaira);
+  const weeklyAvg = weeklyAmounts.length > 0
+    ? weeklyAmounts.reduce((a, b) => a + b, 0) / weeklyAmounts.length
+    : 0;
+
+  let predictabilityScore = 0;
+  let predictability = "none";
+
+  if (weeklyAmounts.length >= 2) {
+    const stdDev = Math.sqrt(
+      weeklyAmounts.reduce((sum, v) => sum + Math.pow(v - weeklyAvg, 2), 0) / weeklyAmounts.length
+    );
+    const cv = weeklyAvg > 0 ? stdDev / weeklyAvg : 1;
+    predictabilityScore = Math.round(10 * (1 - Math.min(cv, 1)));
+    predictability = predictabilityScore >= 7 ? "high" : predictabilityScore >= 4 ? "medium" : "low";
+  }
+
+  const activeBuyerCount = accounts.filter((ba) => ba.payments.length >= 2).length;
+
+  res.json({
+    buyerCount: accounts.length,
+    activeBuyerCount,
+    reliability,
+    concentration,
+    topBuyerPercent,
+    concentrationWarning: topBuyerPercent > 70,
+    timeline,
+    weeklyAverageNaira: Math.round(weeklyAvg),
+    predictability,
+    predictabilityScore,
+  });
+});
+
 export default router;
+

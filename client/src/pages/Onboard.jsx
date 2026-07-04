@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api.js";
 
-const BANK_CODES = [
+const FALLBACK_BANKS = [
   { code: "057", name: "Zenith Bank" },
   { code: "058", name: "GTBank" },
   { code: "044", name: "Access Bank" },
@@ -13,12 +13,31 @@ const BANK_CODES = [
 
 export default function Onboard() {
   const navigate = useNavigate();
+  const [banks, setBanks] = useState(FALLBACK_BANKS);
   const [form, setForm] = useState({
     customerId: "", name: "", email: "", phone: "",
-    bankCode: "057", accountNumber: "",
+    bankCode: "", accountNumber: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Fetch dynamic bank list on mount
+  useEffect(() => {
+    api("/merchants/banks")
+      .then((r) => r.json())
+      .then((d) => {
+        const list = d.banks ?? [];
+        if (list.length > 0) {
+          setBanks(list);
+          // Set default selection to first bank if not yet selected
+          setForm((f) => f.bankCode ? f : { ...f, bankCode: list[0].code });
+        }
+      })
+      .catch(() => {
+        // Keep fallback banks — already set
+        setForm((f) => f.bankCode ? f : { ...f, bankCode: FALLBACK_BANKS[0].code });
+      });
+  }, []);
 
   function set(k) {
     return (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -92,7 +111,7 @@ export default function Onboard() {
                   onChange={set("bankCode")}
                   className="w-full border border-rule rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-leaf bg-paper/50"
                 >
-                  {BANK_CODES.map((b) => (
+                  {banks.map((b) => (
                     <option key={b.code} value={b.code}>{b.name}</option>
                   ))}
                 </select>

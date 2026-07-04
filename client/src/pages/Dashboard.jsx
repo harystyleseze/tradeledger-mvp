@@ -5,6 +5,7 @@ import AppNav from "../components/AppNav.jsx";
 import ScoreCard from "../components/ScoreCard.jsx";
 import AdvanceOffer from "../components/AdvanceOffer.jsx";
 import RepaymentChart from "../components/RepaymentChart.jsx";
+import BuyerInsights from "../components/BuyerInsights.jsx";
 import BuyerLedger from "../components/BuyerLedger.jsx";
 
 function Skeleton() {
@@ -29,6 +30,8 @@ export default function Dashboard() {
   const [merchantName, setMerchantName] = useState(null);
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState(null);
+  const [balance, setBalance] = useState(null);
+  const [mandateStatus, setMandateStatus] = useState(null);
 
   useEffect(() => {
     if (!data) {
@@ -65,6 +68,18 @@ export default function Dashboard() {
           );
         }
       });
+
+    // Fetch account balance (non-blocking)
+    api(`/merchants/${merchantId}/balance`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d?.balance) setBalance(d.balance); })
+      .catch(() => {});
+
+    // Fetch mandate status (non-blocking)
+    api(`/merchants/${merchantId}/mandate-status`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) setMandateStatus(d); })
+      .catch(() => {});
   }, [merchantId]);
 
   async function applyForAdvance() {
@@ -156,6 +171,59 @@ export default function Dashboard() {
           )}
         </div>
 
+        {/* Account balance + Mandate status — compact info row */}
+        {(balance || (mandateStatus?.hasMandateId)) && (
+          <div className="grid md:grid-cols-2 gap-6">
+            {balance && (
+              <div className="bg-white border border-rule rounded-2xl p-5 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+                  <span className="text-leaf text-lg">₦</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-400">Account balance</p>
+                  <p className="font-display font-bold text-ink text-lg tnum">
+                    ₦{(Number(balance.availableBalance ?? 0) / 100).toLocaleString()}
+                  </p>
+                </div>
+                {balance.ledgerBalance != null && balance.ledgerBalance !== balance.availableBalance && (
+                  <div className="text-right">
+                    <p className="text-[10px] text-gray-400">Ledger</p>
+                    <p className="text-xs text-gray-500 tnum">
+                      ₦{(Number(balance.ledgerBalance) / 100).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {mandateStatus?.hasMandateId && (
+              <div className="bg-white border border-rule rounded-2xl p-5 flex items-center gap-4">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  mandateStatus.mandateStatus === "active" ? "bg-green-50" :
+                  mandateStatus.mandateStatus === "unavailable" ? "bg-gray-50" : "bg-amber-50"
+                }`}>
+                  <span className={`text-lg ${
+                    mandateStatus.mandateStatus === "active" ? "text-leaf" :
+                    mandateStatus.mandateStatus === "unavailable" ? "text-gray-400" : "text-amber-500"
+                  }`}>⟳</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-400">Repayment mandate</p>
+                  <p className={`font-medium text-sm capitalize ${
+                    mandateStatus.mandateStatus === "active" ? "text-leaf" :
+                    mandateStatus.mandateStatus === "unavailable" ? "text-gray-500" : "text-amber-600"
+                  }`}>
+                    {mandateStatus.mandateStatus === "unavailable" ? "Sandbox mode" : mandateStatus.mandateStatus}
+                  </p>
+                </div>
+                <p className="text-[10px] text-gray-400 font-mono truncate max-w-[120px]">
+                  {mandateStatus.mandateId?.slice(-8)}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Score breakdown */}
         {breakdown && (
           <div className="bg-white border border-rule rounded-2xl p-6">
@@ -225,6 +293,9 @@ export default function Dashboard() {
             </div>
           </div>
         )}
+
+        {/* Buyer Payment Intelligence — DVA analytics */}
+        <BuyerInsights merchantId={merchantId} />
 
         {/* Buyer Ledger — shown for all merchants to encourage DVA adoption */}
         <BuyerLedger merchantId={merchantId} initialBuyers={buyers} />

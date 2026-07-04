@@ -1,6 +1,8 @@
 import { nombaRequest } from "./auth.js";
 import db from "../db/prisma.js";
 
+const SUB_ACCOUNT_ID = () => process.env.NOMBA_SUB_ACCOUNT_ID || process.env.NOMBA_ACCOUNT_ID;
+
 export async function lookupBank(bankCode, accountNumber) {
   const res = await nombaRequest("POST", "/transfers/bank/lookup", {
     bankCode,
@@ -9,12 +11,27 @@ export async function lookupBank(bankCode, accountNumber) {
   return res.data.accountName;
 }
 
+// List all supported Nigerian banks
+let _banksCache = null;
+let _banksCachedAt = 0;
+
+export async function listBanks() {
+  // Cache for 24 hours — bank list rarely changes
+  if (_banksCache && Date.now() - _banksCachedAt < 24 * 60 * 60 * 1000) {
+    return _banksCache;
+  }
+  const res = await nombaRequest("GET", "/transfers/banks");
+  _banksCache = res.data ?? [];
+  _banksCachedAt = Date.now();
+  return _banksCache;
+}
+
 export async function disburseLoan(advance, merchant) {
   const resolvedName = await lookupBank(merchant.bankCode, merchant.accountNumber);
 
   const merchantTxRef = `payout_${advance.id}_${Date.now()}`;
 
-  await nombaRequest("POST", "/transfers/bank", {
+  await nombaRequest("POST", `/transfers/bank/${SUB_ACCOUNT_ID()}`, {
     amount: advance.amount,
     bankCode: merchant.bankCode,
     accountNumber: merchant.accountNumber,
@@ -38,3 +55,4 @@ export async function disburseLoan(advance, merchant) {
 
   return merchantTxRef;
 }
+

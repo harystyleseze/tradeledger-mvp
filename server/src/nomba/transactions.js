@@ -8,6 +8,8 @@ export function subDays(d, n) {
   return new Date(d.getTime() - n * 24 * 60 * 60 * 1000);
 }
 
+const SUB_ACCOUNT_ID = () => process.env.NOMBA_SUB_ACCOUNT_ID || process.env.NOMBA_ACCOUNT_ID;
+
 // Nomba returns amount as a string and status in UPPERCASE ("SUCCESS").
 // Normalize here at the integration boundary so the scoring engine always
 // sees numeric amounts and lowercase status values. Records with unparseable
@@ -23,8 +25,8 @@ function normalize(t) {
 }
 
 export async function fetchTransactions(dateFrom, dateTo) {
-  // GET /transactions/accounts — cursor-paginated. The endpoint ignores
-  // dateFrom/dateTo query params, so the date range is filtered client-side
+  // GET /transactions/accounts/{subAccountId} — cursor-paginated. The endpoint
+  // ignores dateFrom/dateTo query params, so the date range is filtered client-side
   // on timeCreated.
   const all = [];
   let cursor = null;
@@ -32,7 +34,7 @@ export async function fetchTransactions(dateFrom, dateTo) {
   while (true) {
     const qs = new URLSearchParams({ limit: "200" });
     if (cursor) qs.set("cursor", cursor);
-    const res = await nombaRequest("GET", `/transactions/accounts?${qs.toString()}`);
+    const res = await nombaRequest("GET", `/transactions/accounts/${SUB_ACCOUNT_ID()}?${qs.toString()}`);
     const batch = res.data?.results ?? [];
     all.push(...batch);
     cursor = res.data?.cursor ?? null;
@@ -55,4 +57,10 @@ export async function getMerchantHistory() {
   const dateTo = toNombaDate(new Date());
   const dateFrom = toNombaDate(subDays(new Date(), 90));
   return fetchTransactions(dateFrom, dateTo);
+}
+
+// Confirm a specific transaction by session ID
+export async function requeryTransaction(sessionId) {
+  const res = await nombaRequest("GET", `/transactions/requery/${sessionId}`);
+  return res.data;
 }
