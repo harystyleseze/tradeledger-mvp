@@ -36,6 +36,21 @@ export default function BuyerLedger({ merchantId, initialBuyers = [] }) {
     navigator.clipboard.writeText(text).catch(() => {});
   }
 
+  async function deactivateAccount(accountId) {
+    if (!window.confirm("Are you sure you want to deactivate this account? Future payments will fail.")) return;
+    try {
+      await api(`/buyers/accounts/${accountId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ merchantId })
+      });
+      const updated = await api(`/buyers/accounts/${merchantId}`).then((r) => r.json());
+      setBuyers(updated.buyers ?? []);
+    } catch (err) {
+      alert("Failed to deactivate account");
+    }
+  }
+
   return (
     <div className="bg-white border border-rule rounded-2xl p-6 space-y-5">
       <div className="flex items-center justify-between">
@@ -91,19 +106,40 @@ export default function BuyerLedger({ merchantId, initialBuyers = [] }) {
 
               {expandedId === b.id && (
                 <div className="px-4 pb-4 space-y-3 bg-gray-50 border-t border-gray-100">
-                  <div className="flex items-center justify-between mt-3">
+                  <div className="bg-gray-50 border border-rule rounded-xl p-3 flex justify-between items-center group relative overflow-hidden">
                     <div>
-                      <p className="text-xs text-gray-500 mb-0.5">Account Number (NUBAN)</p>
-                      <p className="font-mono text-sm font-semibold text-gray-800">
+                      <p className="text-[10px] uppercase font-bold tracking-wider text-gray-500">
+                        {b.bankCode === "035" ? "Wema Bank" : b.bankCode === "058" ? "GTBank" : "Nomba"}
+                      </p>
+                      <p className="font-mono text-lg text-ink font-medium tracking-tight">
                         {b.accountNumber}
                       </p>
+                      {b.status === "closed" && (
+                        <span className="inline-block mt-1 bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          DEACTIVATED
+                        </span>
+                      )}
                     </div>
-                    <button
-                      onClick={() => copyToClipboard(b.accountNumber)}
-                      className="text-xs text-green-600 hover:text-green-700 border border-green-200 hover:border-green-300 px-2 py-1 rounded-md transition-colors"
-                    >
-                      Copy
-                    </button>
+                    
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => copyToClipboard(b.accountNumber)}
+                        className="p-2 bg-white border border-gray-200 rounded shadow-sm text-gray-400 hover:text-ink hover:border-gray-300 transition-colors"
+                        title="Copy to clipboard"
+                      >
+                        📋
+                      </button>
+                      
+                      {b.status !== "closed" && (
+                        <button
+                          onClick={() => deactivateAccount(b.id)}
+                          className="p-2 bg-white border border-red-200 rounded shadow-sm text-red-400 hover:text-red-700 hover:border-red-300 hover:bg-red-50 transition-colors"
+                          title="Deactivate account"
+                        >
+                          ⛔
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {b.payments && b.payments.length > 0 ? (

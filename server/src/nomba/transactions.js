@@ -30,8 +30,10 @@ export async function fetchTransactions(dateFrom, dateTo) {
   // on timeCreated.
   const all = [];
   let cursor = null;
+  let pages = 0; // limit pagination to avoid 429 rate limit errors in sandbox
 
-  while (true) {
+  while (pages < 2) {
+    pages++;
     const qs = new URLSearchParams({ limit: "200" });
     if (cursor) qs.set("cursor", cursor);
     const res = await nombaRequest("GET", `/transactions/accounts/${SUB_ACCOUNT_ID()}?${qs.toString()}`);

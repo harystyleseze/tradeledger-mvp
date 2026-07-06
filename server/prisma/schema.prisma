@@ -144,6 +144,7 @@ model CheckoutPayment {
   amount           Int
   orderId          String   @unique
   webhookRequestId String   @unique
+  status           String   @default("paid")
   createdAt        DateTime @default(now())
   merchant         Merchant @relation(fields: [merchantId], references: [id])
 }

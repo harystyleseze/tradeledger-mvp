@@ -6,6 +6,8 @@ import { scoreMerchantFull, calculateAdvance } from "../scoring/engine.js";
 import { getAccountBalance } from "../nomba/virtualAccounts.js";
 import { getMandateStatus } from "../nomba/mandates.js";
 
+import crypto from "crypto";
+
 const router = Router();
 
 // Hardcoded fallback in case the Nomba API is unreachable (sandbox quirks)
@@ -28,6 +30,10 @@ const FALLBACK_BANKS = [
   { code: "214", name: "FCMB" },
   { code: "023", name: "Citibank" },
   { code: "215", name: "Unity Bank" },
+  { code: "100033", name: "Palmpay" },
+  { code: "100004", name: "OPay" },
+  { code: "100040", name: "Moniepoint" },
+  { code: "090267", name: "Kuda Bank" },
 ];
 
 // GET /merchants/banks — dynamic bank list from Nomba with hardcoded fallback
@@ -40,22 +46,43 @@ router.get("/banks", async (_req, res) => {
       code: b.bankCode ?? b.code,
       name: b.bankName ?? b.name,
     }));
-    res.json({ source: "nomba", banks: formatted });
+
+    // Deduplicate banks by code to prevent React duplicate key warnings
+    const uniqueBanks = Array.from(new Map(formatted.map(item => [item.code, item])).values());
+    res.json({ source: "nomba", banks: uniqueBanks });
   } catch (e) {
     console.error(JSON.stringify({ type: "bank_list_error", error: e.message }));
     res.json({ source: "fallback", banks: FALLBACK_BANKS });
   }
 });
 
+// POST /merchants/login — simple login for the demo
+router.post("/login", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: "Missing email" });
+  
+  const merchant = await db.merchant.findFirst({ where: { email } });
+  if (!merchant) return res.status(404).json({ error: "Account not found" });
+  
+  res.json({ merchantId: merchant.id });
+});
+
 // POST /merchants — onboard a merchant, pull transaction history, score, return offer
 router.post("/", async (req, res) => {
-  const { customerId, name, email, phone, bankCode, accountNumber } = req.body;
+  const { customerId: providedCustomerId, name, email, phone, bankCode, accountNumber } = req.body;
 
-  if (!customerId || !name || !email || !phone || !bankCode || !accountNumber) {
+  if (!name || !email || !phone || !bankCode || !accountNumber) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  // 1. Verify bank account before storing
+  let customerId = providedCustomerId;
+
+  // 1. If no customerId provided, generate a local customer ID for the merchant
+  if (!customerId) {
+    customerId = `tl_merchant_${crypto.randomBytes(4).toString("hex")}`;
+  }
+
+  // 2. Verify bank account before storing
   let accountName;
   try {
     accountName = await lookupBank(bankCode, accountNumber);
@@ -189,5 +216,36 @@ router.get("/:id", async (req, res) => {
   res.json(merchant);
 });
 
-export default router;
+// PUT /merchants/:id — update merchant profile and bank details
+router.put("/:id", async (req, res) => {
+  const merchantId = req.params.id;
+  const { name, email, phone, bankCode, accountNumber } = req.body;
 
+  if (!name || !email || !phone || !bankCode || !accountNumber) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  const existing = await db.merchant.findUnique({ where: { id: merchantId } });
+  if (!existing) return res.status(404).json({ error: "Merchant not found" });
+
+  let accountName = existing.accountName;
+
+  // If bank details changed, we must re-verify them with Nomba
+  if (existing.bankCode !== bankCode || existing.accountNumber !== accountNumber) {
+    try {
+      accountName = await lookupBank(bankCode, accountNumber);
+    } catch (e) {
+      console.error(JSON.stringify({ type: "bank_lookup_error", bankCode, error: e.message }));
+      return res.status(422).json({ error: "New bank account could not be verified" });
+    }
+  }
+
+  const updated = await db.merchant.update({
+    where: { id: merchantId },
+    data: { name, email, phone, bankCode, accountNumber, accountName },
+  });
+
+  res.json(updated);
+});
+
+export default router;

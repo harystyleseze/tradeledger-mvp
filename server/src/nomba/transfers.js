@@ -56,3 +56,20 @@ export async function disburseLoan(advance, merchant) {
   return merchantTxRef;
 }
 
+export async function withdrawToBank(subAccountId, amount, bankCode, accountNumber, accountName) {
+  const merchantTxRef = `wd_${subAccountId}_${Date.now()}`;
+
+  const payload = {
+    amount: Math.round(Number(amount)), // Must be in kobo/integer
+    bankCode,
+    accountNumber,
+    accountName,
+    senderName: "TradeLedger Merchant",
+    narration: "Withdrawal from TradeLedger",
+    merchantTxRef,
+  };
+
+  const res = await nombaRequest("POST", `/transfers/bank/${subAccountId}`, payload);
+  return { data: res.data, merchantTxRef };
+}
+

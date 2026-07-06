@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../api.js";
+import SearchableSelect from "../components/SearchableSelect.jsx";
 
 const FALLBACK_BANKS = [
   { code: "057", name: "Zenith Bank" },
@@ -20,6 +21,7 @@ export default function Onboard() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [viewMode, setViewMode] = useState("new"); // "new", "link", "login"
 
   // Fetch dynamic bank list on mount
   useEffect(() => {
@@ -29,13 +31,10 @@ export default function Onboard() {
         const list = d.banks ?? [];
         if (list.length > 0) {
           setBanks(list);
-          // Set default selection to first bank if not yet selected
-          setForm((f) => f.bankCode ? f : { ...f, bankCode: list[0].code });
         }
       })
       .catch(() => {
-        // Keep fallback banks — already set
-        setForm((f) => f.bankCode ? f : { ...f, bankCode: FALLBACK_BANKS[0].code });
+        // Keep fallback banks
       });
   }, []);
 
@@ -48,14 +47,26 @@ export default function Onboard() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api("/merchants", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Unknown error");
-      navigate(`/dashboard/${data.merchantId}`, { state: data });
+      if (viewMode === "login") {
+        // Simple demo login
+        const res = await api("/merchants/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: form.email }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "Login failed");
+        navigate(`/dashboard/${data.merchantId}`);
+      } else {
+        const res = await api("/merchants", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "Unknown error");
+        navigate(`/dashboard/${data.merchantId}`, { state: data });
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -82,40 +93,85 @@ export default function Onboard() {
             </p>
 
             <form onSubmit={submit} className="mt-8 bg-white rounded-2xl border border-rule p-6 space-y-4">
-              {[
-                { label: "Nomba Customer ID", key: "customerId", placeholder: "cus_..." },
-                { label: "Business Name", key: "name", placeholder: "Adaeze's Food Stall" },
-                { label: "Email", key: "email", placeholder: "adaeze@example.com", type: "email" },
-                { label: "Phone", key: "phone", placeholder: "08012345678" },
-                { label: "Account Number", key: "accountNumber", placeholder: "0000000000" },
-              ].map(({ label, key, placeholder, type = "text" }) => (
-                <div key={key}>
-                  <label htmlFor={key} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+              
+              <div className="flex p-1 space-x-1 bg-gray-100/80 rounded-lg">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("new")}
+                  className={`flex-1 py-2 text-xs font-medium rounded-md transition-all ${viewMode === "new" ? 'bg-white shadow text-ink' : 'text-gray-500 hover:text-ink'}`}
+                >
+                  Create New Account
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("link")}
+                  className={`flex-1 py-2 text-xs font-medium rounded-md transition-all ${viewMode === "link" ? 'bg-white shadow text-ink' : 'text-gray-500 hover:text-ink'}`}
+                >
+                  Link Existing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("login")}
+                  className={`flex-1 py-2 text-xs font-medium rounded-md transition-all ${viewMode === "login" ? 'bg-white shadow text-ink' : 'text-gray-500 hover:text-ink'}`}
+                >
+                  Log In
+                </button>
+              </div>
+
+              {viewMode === "login" ? (
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                   <input
-                    id={key}
-                    type={type}
-                    value={form[key]}
-                    onChange={set(key)}
-                    placeholder={placeholder}
+                    id="email"
+                    type="email"
+                    value={form.email}
+                    onChange={set("email")}
+                    placeholder="adaeze@example.com"
                     required
                     className="w-full border border-rule rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-leaf bg-paper/50"
                   />
                 </div>
-              ))}
+              ) : (
+                (viewMode === "link" ? [
+                  { label: "Nomba Customer ID", key: "customerId", placeholder: "cus_..." },
+                  { label: "Business Name", key: "name", placeholder: "Adaeze's Food Stall" },
+                  { label: "Email", key: "email", placeholder: "adaeze@example.com", type: "email" },
+                  { label: "Phone", key: "phone", placeholder: "08012345678" },
+                  { label: "Account Number", key: "accountNumber", placeholder: "0000000000" },
+                ] : [
+                  { label: "Business Name", key: "name", placeholder: "Adaeze's Food Stall" },
+                  { label: "Email", key: "email", placeholder: "adaeze@example.com", type: "email" },
+                  { label: "Phone", key: "phone", placeholder: "08012345678" },
+                  { label: "Account Number", key: "accountNumber", placeholder: "0000000000" },
+                ]).map(({ label, key, placeholder, type = "text" }) => (
+                  <div key={key}>
+                    <label htmlFor={key} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                    <input
+                      id={key}
+                      type={type}
+                      value={form[key]}
+                      onChange={set(key)}
+                      placeholder={placeholder}
+                      required
+                      className="w-full border border-rule rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-leaf bg-paper/50"
+                    />
+                  </div>
+                ))
+              )}
 
-              <div>
-                <label htmlFor="bank" className="block text-sm font-medium text-gray-700 mb-1">Bank</label>
-                <select
-                  id="bank"
-                  value={form.bankCode}
-                  onChange={set("bankCode")}
-                  className="w-full border border-rule rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-leaf bg-paper/50"
-                >
-                  {banks.map((b) => (
-                    <option key={b.code} value={b.code}>{b.name}</option>
-                  ))}
-                </select>
-              </div>
+              {viewMode !== "login" && (
+                <div>
+                  <label htmlFor="bank" className="block text-sm font-medium text-gray-700 mb-1">Bank</label>
+                  <SearchableSelect
+                    id="bank"
+                    options={banks}
+                    value={form.bankCode}
+                    onChange={(val) => setForm((f) => ({ ...f, bankCode: val }))}
+                    placeholder="Select your bank"
+                    required
+                  />
+                </div>
+              )}
 
               {error && (
                 <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
@@ -126,7 +182,7 @@ export default function Onboard() {
                 disabled={loading}
                 className="w-full bg-ink hover:bg-green-900 disabled:bg-gray-300 text-white font-semibold py-3.5 rounded-lg transition-colors"
               >
-                {loading ? "Analysing your revenue..." : "Check my credit score →"}
+                {loading ? "Analysing..." : (viewMode === "login" ? "Log In →" : "Check my credit score →")}
               </button>
             </form>
           </div>

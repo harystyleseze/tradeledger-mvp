@@ -30,13 +30,13 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
           <span className="font-display font-bold text-xl text-ink tracking-tight">TradeLedger</span>
           <div className="flex items-center gap-6 text-sm">
-            <a href="#how-it-works" className="text-gray-600 hover:text-ink hidden sm:block">How it works</a>
-            <a href="#tiers" className="text-gray-600 hover:text-ink hidden sm:block">Advance tiers</a>
+            <a href="#features" className="text-gray-600 hover:text-ink hidden sm:block">Features</a>
+            <a href="#lending" className="text-gray-600 hover:text-ink hidden sm:block">Embedded Lending</a>
             <Link
               to="/onboard"
               className="bg-ink hover:bg-green-900 text-white font-semibold px-4 py-2 rounded-lg transition-colors"
             >
-              Check my score
+              Get Started
             </Link>
           </div>
         </div>
@@ -49,30 +49,27 @@ export default function Landing() {
             Built on Nomba
           </p>
           <h1 className="font-display font-extrabold text-4xl md:text-5xl text-ink leading-[1.08] tracking-tight">
-            Your sales record is your collateral.
+            The Financial Operating System for B2B Trade.
           </h1>
           <p className="mt-5 text-lg text-gray-600 leading-relaxed">
-            TradeLedger reads the revenue you already earn on Nomba and turns it into
-            working capital — up to ₦1,500,000, repaid at 15% of weekly sales.
-            No forms. No collateral. No branch visit.
+            TradeLedger digitizes your supply chain payments, handles automated reconciliation,
+            powers your business treasury, and uses your transaction history to unlock credit.
+            One platform, zero paperwork.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               to="/onboard"
               className="bg-ink hover:bg-green-900 text-white font-semibold px-6 py-3.5 rounded-lg transition-colors"
             >
-              Get your credit score →
+              Onboard my business →
             </Link>
             <a
-              href="#how-it-works"
+              href="#features"
               className="border border-rule bg-white hover:bg-gray-50 text-charcoal font-semibold px-6 py-3.5 rounded-lg transition-colors"
             >
-              See how it works
+              Explore features
             </a>
           </div>
-          <p className="mt-4 text-sm text-gray-500">
-            Scored from 90 days of real transaction history. Repayment pauses automatically when revenue drops.
-          </p>
         </div>
 
         {/* Signature: the live ledger card over the hero photo */}
@@ -84,7 +81,7 @@ export default function Landing() {
           />
           <div className="absolute -bottom-6 -left-2 md:-left-8 bg-white rounded-xl border border-rule shadow-lg p-4 w-[92%] md:w-[380px]">
             <div className="flex items-center justify-between mb-3">
-              <p className="font-display font-semibold text-sm text-ink">Buyer ledger</p>
+              <p className="font-display font-semibold text-sm text-ink">Buyer Ledger</p>
               <span className="text-[11px] text-gray-400 uppercase tracking-wide">Live reconciliation</span>
             </div>
             <div className="divide-y divide-gray-50">
@@ -109,9 +106,9 @@ export default function Landing() {
       <section className="bg-ink text-white mt-10">
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-12 grid grid-cols-1 sm:grid-cols-3 gap-8 text-center">
           {[
-            { value: "600,000+", label: "merchants transact on Nomba" },
-            { value: "₦130 trillion", label: "unmet SME credit demand in Nigeria" },
-            { value: "15%", label: "of weekly revenue — the only repayment rule" },
+            { value: "100%", label: "automated payment reconciliation" },
+            { value: "4+", label: "value-added services built-in" },
+            { value: "₦1.5M", label: "instant credit for eligible merchants" },
           ].map((s) => (
             <div key={s.label}>
               <p className="font-display font-bold text-3xl md:text-4xl tnum">{s.value}</p>
@@ -121,42 +118,50 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section id="how-it-works" className="max-w-6xl mx-auto px-4 md:px-6 py-20">
+      {/* Features Grid */}
+      <section id="features" className="max-w-6xl mx-auto px-4 md:px-6 py-20">
         <h2 className="font-display font-bold text-3xl text-ink tracking-tight text-center">
-          From sales history to working capital
+          Everything your B2B business needs
         </h2>
         <p className="mt-3 text-gray-600 text-center max-w-xl mx-auto">
-          Three steps. The data does the paperwork.
+          We rebuilt merchant financial operations from the ground up using Nomba's infrastructure.
         </p>
-        <div className="mt-12 grid md:grid-cols-3 gap-6">
+        <div className="mt-12 grid md:grid-cols-2 gap-6">
           {[
             {
-              title: "We read your revenue",
-              body: "Ninety days of Nomba transactions become an 8-dimension credit score — revenue level, consistency, growth, buyer diversity and more. Computed in seconds.",
+              title: "Auto-Reconciliation Ledger",
+              body: "Create Dedicated Virtual Accounts (DVAs) for each buyer. Know instantly who paid what, with underpayments and overpayments flagged automatically.",
+              icon: "📊"
             },
             {
-              title: "You accept the offer",
-              body: "A pre-approved advance appears on your dashboard. One tap to accept, then authorize the repayment mandate with an OTP. Funds arrive the same day.",
+              title: "Treasury Wallet & VAS",
+              body: "Manage your pooled funds in one place. Withdraw to any bank or pay for essential business services (Airtime, Data, Power, TV) directly from your dashboard.",
+              icon: "💼"
             },
             {
-              title: "Sales repay it automatically",
-              body: "Every Monday, 15% of that week's revenue goes toward your balance. Slow week? The deduction shrinks. Zero-revenue week? It pauses entirely.",
+              title: "Smart Checkout Links",
+              body: "Generate secure, one-time payment links for ad-hoc customers. Process seamless refunds with a single click if an order goes wrong.",
+              icon: "🔗"
             },
-          ].map((step, i) => (
-            <div key={step.title} className="bg-white rounded-2xl border border-rule p-6">
-              <div className="w-9 h-9 rounded-full bg-green-50 text-leaf font-display font-bold flex items-center justify-center mb-4">
-                {i + 1}
+            {
+              title: "Embedded Credit Scoring",
+              body: "Your transaction history is automatically analyzed across 8 dimensions to build a verifiable credit profile and unlock instant working capital.",
+              icon: "📈"
+            },
+          ].map((feature, i) => (
+            <div key={feature.title} className="bg-white rounded-2xl border border-rule p-6 flex gap-4">
+              <div className="text-3xl">{feature.icon}</div>
+              <div>
+                <h3 className="font-display font-semibold text-lg text-ink">{feature.title}</h3>
+                <p className="mt-2 text-sm text-gray-600 leading-relaxed">{feature.body}</p>
               </div>
-              <h3 className="font-display font-semibold text-lg text-ink">{step.title}</h3>
-              <p className="mt-2 text-sm text-gray-600 leading-relaxed">{step.body}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Buyer ledger explainer with photo */}
-      <section className="bg-white border-y border-rule">
+      {/* Lending Section */}
+      <section id="lending" className="bg-white border-y border-rule">
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-20 grid md:grid-cols-2 gap-12 items-center">
           <img
             src="/images/market-vendor.jpg"
@@ -165,22 +170,21 @@ export default function Landing() {
           />
           <div>
             <p className="text-market font-semibold text-sm uppercase tracking-widest mb-3">
-              The buyer ledger
+              Embedded Lending
             </p>
             <h2 className="font-display font-bold text-3xl text-ink tracking-tight">
-              Your regular buyers raise your limit.
+              Your sales record is your collateral.
             </h2>
             <p className="mt-4 text-gray-600 leading-relaxed">
-              Give each of your regular buyers their own dedicated account number. Every
-              payment they make is recorded, reconciled against what you invoiced, and
-              added to your credit profile. Two or more consistent buyers doubles your
-              advance cap.
+              We turn what you already do—collecting payments from buyers—into an underwriting
+              signal. No forms. No collateral. No branch visits. TradeLedger reads your Nomba
+              settlement data and pre-approves you for advances.
             </p>
             <ul className="mt-6 space-y-3 text-sm text-gray-600">
               {[
-                "A real bank account number per buyer — payments are never mixed up",
-                "Underpayments and overpayments flagged automatically",
-                "Payment history builds a receivables record no bank can ignore",
+                "15% of weekly revenue is the only repayment rule",
+                "Repayments pause automatically on zero-revenue weeks",
+                "Your regular buyers raise your advance limit",
               ].map((item) => (
                 <li key={item} className="flex gap-3">
                   <span className="text-leaf font-bold">✓</span>
@@ -192,10 +196,10 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Tiers */}
-      <section id="tiers" className="max-w-6xl mx-auto px-4 md:px-6 py-20">
+      {/* Credit Tiers */}
+      <section className="max-w-6xl mx-auto px-4 md:px-6 py-20">
         <h2 className="font-display font-bold text-3xl text-ink tracking-tight text-center">
-          Advance limits that grow with your record
+          Credit limits that grow with your business
         </h2>
         <div className="mt-12 grid md:grid-cols-3 gap-6">
           {[
@@ -241,7 +245,7 @@ export default function Landing() {
             to="/onboard"
             className="inline-block bg-ink hover:bg-green-900 text-white font-semibold px-8 py-4 rounded-lg transition-colors"
           >
-            Check your score — it takes 60 seconds
+            Start using TradeLedger today
           </Link>
         </div>
       </section>
@@ -251,7 +255,7 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="font-display font-bold text-ink">TradeLedger</span>
           <p className="text-sm text-gray-500">
-            Revenue-based financing for Nigerian merchants · Built on the Nomba API
+            A complete B2B financial operating system · Built on the Nomba API
           </p>
           <Link to="/admin" className="text-sm text-gray-400 hover:text-gray-600">
             Lender portal →

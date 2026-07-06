@@ -6,7 +6,6 @@ import ScoreCard from "../components/ScoreCard.jsx";
 import AdvanceOffer from "../components/AdvanceOffer.jsx";
 import RepaymentChart from "../components/RepaymentChart.jsx";
 import BuyerInsights from "../components/BuyerInsights.jsx";
-import BuyerLedger from "../components/BuyerLedger.jsx";
 
 function Skeleton() {
   return (
@@ -131,6 +130,14 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-paper">
       <AppNav
+        navLinks={
+          <>
+            <Link to={`/dashboard/${merchantId}`} className="text-ink font-medium">Dashboard</Link>
+            <Link to={`/dashboard/${merchantId}/payments`} className="text-gray-500 hover:text-ink transition-colors">Payments</Link>
+            <Link to={`/dashboard/${merchantId}/wallet`} className="text-gray-500 hover:text-ink transition-colors">Wallet</Link>
+            <Link to={`/dashboard/${merchantId}/settings`} className="text-gray-500 hover:text-ink transition-colors">Settings</Link>
+          </>
+        }
         right={
           <>
             {merchantName && (
@@ -294,11 +301,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Buyer Payment Intelligence — DVA analytics */}
         <BuyerInsights merchantId={merchantId} />
-
-        {/* Buyer Ledger — shown for all merchants to encourage DVA adoption */}
-        <BuyerLedger merchantId={merchantId} initialBuyers={buyers} />
       </div>
     </div>
   );

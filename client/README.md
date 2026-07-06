@@ -1,6 +1,6 @@
 # TradeLedger Frontend
 
-React 18 single-page application for TradeLedger — a revenue-based working capital platform for Nigerian merchants built on Nomba. The frontend provides merchant onboarding, credit score display, advance application, mandate consent, and an admin portfolio view.
+React 18 single-page application for TradeLedger — a B2B financial operations and embedded lending platform built on Nomba. The frontend provides merchant onboarding (dynamic sub-account creation), DVA management, online checkout links, a multi-tabbed Wallet for withdrawals and VAS (Airtime, Data, Power, TV), and a credit scoring/advance application portal.
 
 In production, the Express API server builds and serves this application as static files from the same process — no separate hosting or CDN required.
 

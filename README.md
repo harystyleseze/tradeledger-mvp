@@ -1,23 +1,21 @@
 # TradeLedger
 
-> Revenue-based working capital for Nigerian merchants, powered by Nomba.
+> A B2B Financial Operations and Embedded Lending Platform, powered by Nomba.
 
-TradeLedger scores Nomba merchants from 90 days of settlement data, then extends working capital advances repaid automatically at 15% of weekly revenue — no forms, no collateral, no branch visit. Merchants who add buyers via Dedicated Virtual Accounts unlock higher advance limits and a richer credit profile.
+TradeLedger is a comprehensive financial operating system for B2B merchants (wholesalers, distributors, aggregators). It digitizes their supply chain payments, handles automated reconciliation, and turns their verifiable transaction history into an underwriting signal to unlock credit.
 
 ---
 
-## Features
+## Core Features
 
-- **8-dimension credit scoring** — 5 settlement dimensions (revenue mean, consistency, operational streak, growth, channel diversity) + 3 DVA dimensions (buyer diversity, receivables regularity, concentration penalty)
-- **Tiered advance caps** — ₦500K (settlement) → ₦1M (2+ DVA buyers) → ₦1.5M (DVA + checkout)
-- **Per-buyer Dedicated Virtual Accounts** — each buyer gets a unique NUBAN; every payment is automatically reconciled as `exact`, `under`, or `over`
-- **Invoice locking** — set `defaultAmountExpected` on a buyer account; reconciliation fires against it even when Nomba's webhook omits the field
-- **Revenue-share repayment** — 15% of weekly revenue via Nomba mandate; pauses automatically on zero-revenue weeks
-- **Auto-delinquency** — 8 consecutive zero-revenue weeks triggers advance status change and manual review alert
-- **Cross-merchant buyer reputation** — `senderAccountNumber` aggregated across all merchants; query any bank account's payment history and shortfall rate network-wide
-- **HMAC-SHA256 webhook verification** — `nomba-signature` header, `express.raw()` body, immediate 200 response
-- **Idempotent event processing** — `webhookRequestId @unique` + Prisma P2002 catch; Nomba retries are safe
-- **Sandbox simulator** — 5 routes fire synthetic webhook events for full flow demos without real API traffic
+- **Dynamic Sub-Account Provisioning** — Every onboarded merchant receives a dedicated Nomba sub-account to pool their funds.
+- **Dedicated Virtual Accounts (DVA) & Auto-Reconciliation** — Merchants can provision unique NUBANs for each of their buyers. Payments are automatically reconciled against expected invoice amounts (`exact`, `under`, `over`).
+- **One-Time Checkout Links** — Generate secure payment links for ad-hoc customers with instant, single-click refunds for successful payments.
+- **Treasury Wallet & Value-Added Services (VAS)** — Withdraw pooled funds to traditional bank accounts or spend directly on the platform (Airtime, Data, Electricity with meter validation, Cable TV with smartcard validation).
+- **8-Dimension Credit Scoring** — Evaluates 5 settlement dimensions (revenue mean, consistency, etc.) and 3 DVA dimensions (buyer diversity, receivables regularity) to build a credit profile.
+- **Cross-Merchant Buyer Reputation** — Payer account numbers (`senderAccountNumber`) are tracked network-wide to build a proprietary B2B credit bureau.
+- **HMAC-SHA256 Webhook Verification** — `nomba-signature` header verified with immediate 200 response to prevent retry loops.
+- **Idempotent Event Processing** — Uses Prisma `@unique` constraints to safely handle duplicate Nomba webhooks.
 
 ---
 

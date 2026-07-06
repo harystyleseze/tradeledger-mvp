@@ -5,6 +5,8 @@ import advancesRouter from "./routes/advances.js";
 import adminRouter from "./routes/admin.js";
 import buyersRouter from "./routes/buyers.js";
 import simulateRouter from "./routes/simulate.js";
+import checkoutRouter from "./routes/checkout.js";
+import walletRouter from "./routes/wallet.js";
 import webhookRouter from "./webhooks/handler.js";
 import { startRevenueReviewJob } from "./jobs/revenueReview.js";
 import { startReconciliationJob } from "./jobs/reconciliation.js";
@@ -47,6 +49,8 @@ app.use("/advances", advancesRouter);
 app.use("/admin", adminRouter);
 app.use("/buyers", buyersRouter);
 app.use("/simulate", simulateRouter);
+app.use("/checkout", checkoutRouter);
+app.use("/wallet", walletRouter);
 
 app.use((err, req, res, next) => {
   console.error(JSON.stringify({ type: "unhandled_error", error: err.message, stack: err.stack }));

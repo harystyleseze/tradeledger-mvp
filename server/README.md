@@ -1,6 +1,6 @@
 # TradeLedger API Server
 
-Revenue-based working capital for Nigerian merchants. The server scores Nomba merchants from their transaction history, issues cash advances, and collects repayments automatically via the Nomba Mandates API.
+A B2B Financial Operations and Embedded Lending Platform. The server orchestrates Nomba's Sub-accounts, Virtual Accounts, Checkout, and Bill Payment APIs to digitize supply chain payments, and uses the resulting transaction history to score and underwrite merchants and their buyers.
 
 ---
 
