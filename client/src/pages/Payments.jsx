@@ -9,7 +9,6 @@ export default function Payments() {
   const { merchantId } = useParams();
   const navigate = useNavigate();
   const [merchantName, setMerchantName] = useState(null);
-  const [buyers, setBuyers] = useState([]);
   const [activeTab, setActiveTab] = useState("dva"); // "dva" or "links"
   const [loading, setLoading] = useState(true);
 
@@ -19,24 +18,6 @@ export default function Payments() {
       .then((d) => {
         if (!d) return navigate("/onboard");
         if (d.name) setMerchantName(d.name);
-        if (d.buyerAccounts) {
-          setBuyers(
-            d.buyerAccounts.map((ba) => ({
-              id: ba.id,
-              buyerName: ba.customerReference,
-              accountNumber: ba.accountNumber,
-              bankCode: ba.bankCode,
-              paymentCount: ba.payments?.length ?? 0,
-              totalReceivedNaira: (ba.payments ?? []).reduce((s, p) => s + p.amount / 100, 0),
-              payments: (ba.payments ?? []).map((p) => ({
-                amount: p.amount,
-                amountNaira: p.amount / 100,
-                payer: p.payer,
-                receivedAt: p.receivedAt,
-              })),
-            }))
-          );
-        }
       })
       .catch(() => navigate("/onboard"))
       .finally(() => setLoading(false));
@@ -110,7 +91,7 @@ export default function Payments() {
         <div className="pb-12">
           {activeTab === "dva" && (
             <div className="animate-in fade-in duration-300">
-              <BuyerLedger merchantId={merchantId} initialBuyers={buyers} />
+              <BuyerLedger merchantId={merchantId} />
             </div>
           )}
           {activeTab === "links" && (

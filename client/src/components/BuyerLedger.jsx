@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "../api.js";
 
 export default function BuyerLedger({ merchantId, initialBuyers = [] }) {
@@ -7,6 +7,14 @@ export default function BuyerLedger({ merchantId, initialBuyers = [] }) {
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+
+  // Fetch always on mount to ensure fresh data and correct schema mapping
+  useEffect(() => {
+    api(`/buyers/accounts/${merchantId}`)
+      .then((r) => r.json())
+      .then((d) => setBuyers(d.buyers ?? []))
+      .catch(console.error);
+  }, [merchantId]);
 
   async function addBuyer(e) {
     e.preventDefault();

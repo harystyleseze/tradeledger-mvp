@@ -25,7 +25,6 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [data, setData] = useState(location.state ?? null);
   const [advance, setAdvance] = useState(null);
-  const [buyers, setBuyers] = useState([]);
   const [merchantName, setMerchantName] = useState(null);
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState(null);
@@ -47,25 +46,6 @@ export default function Dashboard() {
       .then((d) => {
         if (d.name) setMerchantName(d.name);
         if (d.advances?.[0]) setAdvance(d.advances[0]);
-        if (d.buyerAccounts) {
-          // Shape from GET /merchants/:id includes payments nested under each buyerAccount
-          setBuyers(
-            d.buyerAccounts.map((ba) => ({
-              id: ba.id,
-              buyerName: ba.customerReference,
-              accountNumber: ba.accountNumber,
-              bankCode: ba.bankCode,
-              paymentCount: ba.payments?.length ?? 0,
-              totalReceivedNaira: (ba.payments ?? []).reduce((s, p) => s + p.amount / 100, 0),
-              payments: (ba.payments ?? []).map((p) => ({
-                amount: p.amount,
-                amountNaira: p.amount / 100,
-                payer: p.payer,
-                receivedAt: p.receivedAt,
-              })),
-            }))
-          );
-        }
       });
 
     // Fetch account balance (non-blocking)
