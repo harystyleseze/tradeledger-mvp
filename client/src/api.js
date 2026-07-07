@@ -20,7 +20,7 @@ export default async function api(path, options = {}) {
 
   const response = await fetch(`${API_URL}${path}`, options);
   
-  if (response.status === 401) {
+  if (response.status === 401 && !path.includes("/login")) {
     localStorage.removeItem("merchantId");
     localStorage.removeItem("token");
     if (window.location.pathname !== "/") {
