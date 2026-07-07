@@ -10,6 +10,22 @@ const FALLBACK_BANKS = [
   { code: "011", name: "First Bank" },
   { code: "035", name: "Wema Bank" },
   { code: "032", name: "Union Bank" },
+  { code: "033", name: "United Bank for Africa" },
+  { code: "050", name: "EcoBank" },
+  { code: "070", name: "Fidelity Bank" },
+  { code: "076", name: "Polaris Bank" },
+  { code: "030", name: "Heritage Bank" },
+  { code: "082", name: "Keystone Bank" },
+  { code: "221", name: "Stanbic IBTC Bank" },
+  { code: "232", name: "Sterling Bank" },
+  { code: "068", name: "Standard Chartered" },
+  { code: "214", name: "FCMB" },
+  { code: "023", name: "Citibank" },
+  { code: "215", name: "Unity Bank" },
+  { code: "100033", name: "Palmpay" },
+  { code: "100004", name: "OPay" },
+  { code: "100040", name: "Moniepoint" },
+  { code: "090267", name: "Kuda Bank" },
 ];
 
 export default function Onboard() {
@@ -17,7 +33,7 @@ export default function Onboard() {
   const [banks, setBanks] = useState(FALLBACK_BANKS);
   const [form, setForm] = useState({
     customerId: "", name: "", email: "", phone: "",
-    bankCode: "", accountNumber: "",
+    bankCode: "", accountNumber: "", password: "", confirmPassword: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -47,15 +63,21 @@ export default function Onboard() {
     setLoading(true);
     setError(null);
     try {
+      if (viewMode !== "login" && form.password !== form.confirmPassword) {
+        throw new Error("Passwords do not match");
+      }
+      
       if (viewMode === "login") {
         // Simple demo login
         const res = await api("/merchants/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: form.email }),
+          body: JSON.stringify({ email: form.email, password: form.password }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Login failed");
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("merchantId", data.merchantId);
         navigate(`/dashboard/${data.merchantId}`);
       } else {
         const res = await api("/merchants", {
@@ -65,6 +87,8 @@ export default function Onboard() {
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error ?? "Unknown error");
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("merchantId", data.merchantId);
         navigate(`/dashboard/${data.merchantId}`, { state: data });
       }
     } catch (err) {
@@ -119,18 +143,32 @@ export default function Onboard() {
               </div>
 
               {viewMode === "login" ? (
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input
-                    id="email"
-                    type="email"
-                    value={form.email}
-                    onChange={set("email")}
-                    placeholder="adaeze@example.com"
-                    required
-                    className="w-full border border-rule rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-leaf bg-paper/50"
-                  />
-                </div>
+                <>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input
+                      id="email"
+                      type="email"
+                      value={form.email}
+                      onChange={set("email")}
+                      placeholder="adaeze@example.com"
+                      required
+                      className="w-full border border-rule rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-leaf bg-paper/50"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input
+                      id="password"
+                      type="password"
+                      value={form.password}
+                      onChange={set("password")}
+                      placeholder="••••••••"
+                      required
+                      className="w-full border border-rule rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-leaf bg-paper/50"
+                    />
+                  </div>
+                </>
               ) : (
                 (viewMode === "link" ? [
                   { label: "Nomba Customer ID", key: "customerId", placeholder: "cus_..." },
@@ -138,11 +176,15 @@ export default function Onboard() {
                   { label: "Email", key: "email", placeholder: "adaeze@example.com", type: "email" },
                   { label: "Phone", key: "phone", placeholder: "08012345678" },
                   { label: "Account Number", key: "accountNumber", placeholder: "0000000000" },
+                  { label: "Password", key: "password", placeholder: "••••••••", type: "password" },
+                  { label: "Confirm Password", key: "confirmPassword", placeholder: "••••••••", type: "password" },
                 ] : [
                   { label: "Business Name", key: "name", placeholder: "Adaeze's Food Stall" },
                   { label: "Email", key: "email", placeholder: "adaeze@example.com", type: "email" },
                   { label: "Phone", key: "phone", placeholder: "08012345678" },
                   { label: "Account Number", key: "accountNumber", placeholder: "0000000000" },
+                  { label: "Password", key: "password", placeholder: "••••••••", type: "password" },
+                  { label: "Confirm Password", key: "confirmPassword", placeholder: "••••••••", type: "password" },
                 ]).map(({ label, key, placeholder, type = "text" }) => (
                   <div key={key}>
                     <label htmlFor={key} className="block text-sm font-medium text-gray-700 mb-1">{label}</label>

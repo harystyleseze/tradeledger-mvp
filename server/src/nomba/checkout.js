@@ -1,14 +1,16 @@
 import { nombaRequest } from "./auth.js";
 
-// Create a new one-time checkout order (returns a checkoutLink)
 export async function createCheckoutOrder({ orderReference, amount, customerEmail, customerName }) {
   const payload = {
-    orderReference,
-    customerId: customerEmail || "anonymous",
-    customerEmail,
-    customerName,
-    amount,
-    currency: "NGN",
+    order: {
+      orderReference,
+      customerId: customerEmail || "anonymous",
+      customerEmail,
+      customerName,
+      amount,
+      currency: "NGN",
+      description: "Checkout Order"
+    }
   };
 
   const res = await nombaRequest("POST", "/checkout/order", payload);

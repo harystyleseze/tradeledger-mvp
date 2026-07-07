@@ -146,6 +146,16 @@ export default function Dashboard() {
             <Link to="/admin" className="text-gray-400 hover:text-ink">
               Lender portal →
             </Link>
+            <button
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("merchantId");
+                navigate("/");
+              }}
+              className="text-gray-400 hover:text-red-500 text-sm font-medium ml-4 transition-colors"
+            >
+              Log Out
+            </button>
           </>
         }
       />

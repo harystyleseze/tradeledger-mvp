@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
-    "build": "npx prisma generate && npx prisma migrate deploy",
+    "build": "npx prisma generate && npx prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
@@ -16,13 +16,17 @@
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
+    "bcrypt": "^6.0.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.3",
     "node-cron": "^3.0.3",
     "prisma": "^5.14.0",
     "uuid": "^10.0.0"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "jest": "^29.7.0"
   },
   "jest": {

@@ -17,6 +17,7 @@ model Merchant {
   accountNumber String
   accountName   String
   status        String   @default("onboarded")
+  passwordHash  String   @default("")
   createdAt     DateTime @default(now())
 
   scores            CreditScore[]

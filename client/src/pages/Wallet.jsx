@@ -80,14 +80,14 @@ export default function Wallet() {
       if (elRes.ok) {
         const p = await elRes.json();
         setElectricityProviders(p.data || []);
-        if (p.data && p.data.length > 0) setDisco(p.data[0].providerCode);
+        if (p.data && p.data.length > 0) setDisco(p.data[0].id || p.data[0].providerCode);
       }
 
       const cbRes = await api(`/wallet/providers/cabletv`);
       if (cbRes.ok) {
         const p = await cbRes.json();
         setCableProviders(p.data || []);
-        if (p.data && p.data.length > 0) setCableProvider(p.data[0].providerCode);
+        if (p.data && p.data.length > 0) setCableProvider(p.data[0].id || p.data[0].providerCode);
       }
     } catch (e) {
       console.error(e);
@@ -304,7 +304,7 @@ export default function Wallet() {
                   onChange={(e) => setWithdrawAmount(e.target.value)}
                   placeholder="e.g. 10000"
                   className="w-full border border-rule rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-leaf bg-paper/50"
-                  disabled={withdrawing || balance <= 0}
+                  disabled={withdrawing}
                 />
               </div>
 
@@ -422,7 +422,7 @@ export default function Wallet() {
                       disabled={billStatus.loading}
                     >
                       {electricityProviders.map(p => (
-                        <option key={p.providerCode} value={p.providerCode}>{p.providerName}</option>
+                        <option key={p.id || p.providerCode} value={p.id || p.providerCode}>{p.name || p.providerName}</option>
                       ))}
                     </select>
                   </div>
@@ -472,7 +472,7 @@ export default function Wallet() {
                       disabled={billStatus.loading}
                     >
                       {cableProviders.map(p => (
-                        <option key={p.providerCode} value={p.providerCode}>{p.providerName}</option>
+                        <option key={p.id || p.providerCode} value={p.id || p.providerCode}>{p.name || p.providerName}</option>
                       ))}
                     </select>
                   </div>
@@ -520,7 +520,7 @@ export default function Wallet() {
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="e.g. 1000"
                     className="w-full border border-rule rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-leaf bg-paper/50"
-                    disabled={billStatus.loading || balance <= 0}
+                    disabled={billStatus.loading}
                   />
                 </div>
               )}

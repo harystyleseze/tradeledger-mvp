@@ -5,12 +5,15 @@ import { createSubAccount, getSubAccountBalance } from "../nomba/subaccounts.js"
 import { disburseLoan } from "../nomba/transfers.js";
 import { calculateAdvance } from "../scoring/engine.js";
 import { toNombaDate } from "../nomba/transactions.js";
+import { authenticateToken } from "../utils/auth.js";
 
 const router = Router();
 
 // POST /advances/apply — apply for an advance after scoring
-router.post("/apply", async (req, res) => {
+router.post("/apply", authenticateToken, async (req, res) => {
   const { merchantId, scoreId } = req.body;
+
+  if (req.merchantId !== merchantId) return res.status(403).json({ error: "Forbidden" });
 
   if (!merchantId || !scoreId) {
     return res.status(400).json({ error: "merchantId and scoreId are required" });
@@ -108,13 +111,14 @@ router.post("/apply", async (req, res) => {
 
 // POST /advances/:id/activate — called after merchant completes mandate consent
 // In sandbox: call this manually after OTP bypass to advance state
-router.post("/:id/activate", async (req, res) => {
+router.post("/:id/activate", authenticateToken, async (req, res) => {
   const advance = await db.advance.findUnique({
     where: { id: req.params.id },
     include: { merchant: true },
   });
 
   if (!advance) return res.status(404).json({ error: "Advance not found" });
+  if (advance.merchantId !== req.merchantId) return res.status(403).json({ error: "Forbidden" });
   if (advance.status !== "pending_consent") {
     return res.status(409).json({ error: `Advance is already ${advance.status}` });
   }
@@ -146,7 +150,7 @@ router.post("/:id/activate", async (req, res) => {
 });
 
 // GET /advances/:id — get advance with repayment history
-router.get("/:id", async (req, res) => {
+router.get("/:id", authenticateToken, async (req, res) => {
   const advance = await db.advance.findUnique({
     where: { id: req.params.id },
     include: {
@@ -156,6 +160,7 @@ router.get("/:id", async (req, res) => {
   });
 
   if (!advance) return res.status(404).json({ error: "Advance not found" });
+  if (advance.merchantId !== req.merchantId) return res.status(403).json({ error: "Forbidden" });
 
   const totalRepaid = advance.repayments
     .filter((r) => r.status === "success")

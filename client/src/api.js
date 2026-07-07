@@ -8,6 +8,25 @@
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-export default function api(path, options) {
-  return fetch(`${API_URL}${path}`, options);
+export default async function api(path, options = {}) {
+  const token = localStorage.getItem("token");
+  
+  if (token) {
+    options.headers = {
+      ...options.headers,
+      "Authorization": `Bearer ${token}`
+    };
+  }
+
+  const response = await fetch(`${API_URL}${path}`, options);
+  
+  if (response.status === 401) {
+    localStorage.removeItem("merchantId");
+    localStorage.removeItem("token");
+    if (window.location.pathname !== "/") {
+      window.location.href = "/";
+    }
+  }
+  
+  return response;
 }

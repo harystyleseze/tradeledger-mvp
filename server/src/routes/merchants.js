@@ -7,6 +7,8 @@ import { getAccountBalance } from "../nomba/virtualAccounts.js";
 import { getMandateStatus } from "../nomba/mandates.js";
 
 import crypto from "crypto";
+import bcrypt from "bcrypt";
+import { generateToken, authenticateToken } from "../utils/auth.js";
 
 const router = Router();
 
@@ -58,22 +60,35 @@ router.get("/banks", async (_req, res) => {
 
 // POST /merchants/login — simple login for the demo
 router.post("/login", async (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ error: "Missing email" });
-  
-  const merchant = await db.merchant.findFirst({ where: { email } });
-  if (!merchant) return res.status(404).json({ error: "Account not found" });
-  
-  res.json({ merchantId: merchant.id });
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: "Missing email or password" });
+    
+    const merchant = await db.merchant.findFirst({ where: { email } });
+    if (!merchant) return res.status(401).json({ error: "Invalid credentials" });
+    
+    // existing users might not have a password set up if they didn't run the migration correctly
+    if (!merchant.passwordHash) return res.status(401).json({ error: "Please reset your password" });
+
+    const isMatch = await bcrypt.compare(password, merchant.passwordHash);
+    if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
+    
+    const token = generateToken(merchant.id);
+    res.json({ merchantId: merchant.id, token });
+  } catch (err) {
+    console.error("Login Error:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 // POST /merchants — onboard a merchant, pull transaction history, score, return offer
 router.post("/", async (req, res) => {
-  const { customerId: providedCustomerId, name, email, phone, bankCode, accountNumber } = req.body;
+  try {
+    const { customerId: providedCustomerId, name, email, phone, bankCode, accountNumber, password } = req.body;
 
-  if (!name || !email || !phone || !bankCode || !accountNumber) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
+    if (!name || !email || !phone || !bankCode || !accountNumber || !password) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
 
   let customerId = providedCustomerId;
 
@@ -91,12 +106,22 @@ router.post("/", async (req, res) => {
     return res.status(422).json({ error: "Bank account could not be verified" });
   }
 
-  // 2. Upsert merchant (idempotent onboarding)
-  const merchant = await db.merchant.upsert({
-    where: { customerId },
-    update: { name, email, phone, bankCode, accountNumber, accountName },
-    create: { customerId, name, email, phone, bankCode, accountNumber, accountName },
-  });
+  const passwordHash = await bcrypt.hash(password, 10);
+
+  // 3. Upsert merchant (idempotent onboarding)
+  let merchant;
+  try {
+    merchant = await db.merchant.upsert({
+      where: { customerId },
+      update: { name, email, phone, bankCode, accountNumber, accountName, passwordHash },
+      create: { customerId, name, email, phone, bankCode, accountNumber, accountName, passwordHash },
+    });
+  } catch (e) {
+    if (e.code === "P2002") {
+       return res.status(409).json({ error: "An account with this email or ID already exists." });
+    }
+    throw e;
+  }
 
   // 3. Pull 90-day transaction history from Nomba
   let transactions;
@@ -147,11 +172,18 @@ router.post("/", async (req, res) => {
         }
       : null,
     reason: scoreResult.reason,
+    token: generateToken(merchant.id),
   });
+  } catch (err) {
+    console.error("Signup Error:", err);
+    res.status(500).json({ error: "Internal server error during signup" });
+  }
 });
 
 // GET /merchants/:id/balance — get sub-account balance from Nomba
-router.get("/:id/balance", async (req, res) => {
+router.get("/:id/balance", authenticateToken, async (req, res) => {
+  if (req.merchantId !== req.params.id) return res.status(403).json({ error: "Forbidden" });
+
   const merchant = await db.merchant.findUnique({ where: { id: req.params.id } });
   if (!merchant) return res.status(404).json({ error: "Merchant not found" });
 
@@ -171,7 +203,9 @@ router.get("/:id/balance", async (req, res) => {
 });
 
 // GET /merchants/:id/mandate-status — check mandate status for active advance
-router.get("/:id/mandate-status", async (req, res) => {
+router.get("/:id/mandate-status", authenticateToken, async (req, res) => {
+  if (req.merchantId !== req.params.id) return res.status(403).json({ error: "Forbidden" });
+
   const advance = await db.advance.findFirst({
     where: { merchantId: req.params.id, status: { notIn: ["settled"] } },
     orderBy: { createdAt: "desc" },
@@ -193,7 +227,9 @@ router.get("/:id/mandate-status", async (req, res) => {
 });
 
 // GET /merchants/:id — get merchant with latest score and active advance
-router.get("/:id", async (req, res) => {
+router.get("/:id", authenticateToken, async (req, res) => {
+  if (req.merchantId !== req.params.id) return res.status(403).json({ error: "Forbidden" });
+
   const merchant = await db.merchant.findUnique({
     where: { id: req.params.id },
     include: {
@@ -217,8 +253,10 @@ router.get("/:id", async (req, res) => {
 });
 
 // PUT /merchants/:id — update merchant profile and bank details
-router.put("/:id", async (req, res) => {
+router.put("/:id", authenticateToken, async (req, res) => {
   const merchantId = req.params.id;
+  if (req.merchantId !== merchantId) return res.status(403).json({ error: "Forbidden" });
+
   const { name, email, phone, bankCode, accountNumber } = req.body;
 
   if (!name || !email || !phone || !bankCode || !accountNumber) {
