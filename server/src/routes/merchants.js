@@ -64,14 +64,26 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: "Missing email or password" });
     
-    const merchant = await db.merchant.findFirst({ where: { email } });
-    if (!merchant) return res.status(401).json({ error: "Invalid credentials" });
+    const merchant = await db.merchant.findFirst({ 
+      where: { email },
+      orderBy: { createdAt: 'desc' } // Always pick the newest account for this email
+    });
+    if (!merchant) {
+      console.log(`Login failed: No merchant found for email ${email}`);
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
     
     // existing users might not have a password set up if they didn't run the migration correctly
-    if (!merchant.passwordHash) return res.status(401).json({ error: "Please reset your password" });
+    if (!merchant.passwordHash) {
+      console.log(`Login failed: Merchant ${merchant.id} has empty passwordHash. Full merchant object: ${JSON.stringify(merchant)}`);
+      return res.status(401).json({ error: "Please reset your password" });
+    }
 
     const isMatch = await bcrypt.compare(password, merchant.passwordHash);
-    if (!isMatch) return res.status(401).json({ error: "Invalid credentials" });
+    if (!isMatch) {
+      console.log(`Login failed: Invalid password for merchant ${merchant.id}`);
+      return res.status(401).json({ error: "Invalid credentials" });
+    }
     
     const token = generateToken(merchant.id);
     res.json({ merchantId: merchant.id, token });
