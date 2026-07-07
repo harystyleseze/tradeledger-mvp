@@ -28,7 +28,10 @@ export default function Landing() {
       {/* Nav */}
       <nav className="border-b border-rule bg-white/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
-          <span className="font-display font-bold text-xl text-ink tracking-tight">TradeLedger</span>
+          <div className="flex items-center gap-2">
+            <img src="/favicon.svg" alt="TradeLedger Logo" className="w-7 h-7" />
+            <span className="font-display font-bold text-xl text-ink tracking-tight">TradeLedger</span>
+          </div>
           <div className="flex items-center gap-6 text-sm">
             <a href="#features" className="text-gray-600 hover:text-ink hidden sm:block">Features</a>
             <a href="#lending" className="text-gray-600 hover:text-ink hidden sm:block">Embedded Lending</a>
@@ -253,7 +256,10 @@ export default function Landing() {
       {/* Footer */}
       <footer className="border-t border-rule bg-white">
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="font-display font-bold text-ink">TradeLedger</span>
+          <div className="flex items-center gap-2">
+            <img src="/favicon.svg" alt="TradeLedger Logo" className="w-6 h-6 grayscale opacity-80" />
+            <span className="font-display font-bold text-ink">TradeLedger</span>
+          </div>
           <p className="text-sm text-gray-500">
             A complete B2B financial operating system · Built on the Nomba API
           </p>

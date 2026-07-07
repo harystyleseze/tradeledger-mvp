@@ -102,8 +102,9 @@ export default function Onboard() {
     <div className="min-h-screen bg-paper grid lg:grid-cols-2">
       {/* Form panel */}
       <div className="flex flex-col p-6 md:p-10">
-        <Link to="/" className="font-display font-bold text-xl text-ink tracking-tight">
-          TradeLedger
+        <Link to="/" className="flex items-center gap-2 font-display font-bold text-xl text-ink tracking-tight">
+          <img src="/favicon.svg" alt="TradeLedger Logo" className="w-7 h-7" />
+          <span>TradeLedger</span>
         </Link>
 
         <div className="flex-1 flex items-center justify-center py-10">
