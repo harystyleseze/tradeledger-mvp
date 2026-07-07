@@ -30,6 +30,7 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
   const [balance, setBalance] = useState(null);
   const [mandateStatus, setMandateStatus] = useState(null);
+  const [insights, setInsights] = useState(null);
 
   useEffect(() => {
     if (!data) {
@@ -58,6 +59,12 @@ export default function Dashboard() {
     api(`/merchants/${merchantId}/mandate-status`)
       .then((r) => r.ok ? r.json() : null)
       .then((d) => { if (d) setMandateStatus(d); })
+      .catch(() => {});
+
+    // Fetch buyer insights (non-blocking)
+    api(`/buyers/insights/${merchantId}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) setInsights(d); })
       .catch(() => {});
   }, [merchantId]);
 
@@ -109,6 +116,34 @@ export default function Dashboard() {
   return (
     <DashboardLayout merchantId={merchantId} merchantName={merchantName}>
       <div className="space-y-6">
+        {/* At-a-Glance Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-white border border-rule rounded-2xl p-5 flex flex-col justify-between hover:border-leaf transition-colors group">
+            <p className="text-xs text-gray-500 font-medium">Available Balance</p>
+            <p className="font-display font-bold text-ink text-2xl mt-3 tnum group-hover:text-leaf transition-colors">
+              ₦{((balance?.availableBalance || 0) / 100).toLocaleString(undefined, { minimumFractionDigits: 0 })}
+            </p>
+          </div>
+          <div className="bg-white border border-rule rounded-2xl p-5 flex flex-col justify-between hover:border-leaf transition-colors group">
+            <p className="text-xs text-gray-500 font-medium">Active Buyers</p>
+            <p className="font-display font-bold text-ink text-2xl mt-3 tnum group-hover:text-leaf transition-colors">
+              {insights?.buyerCount || 0}
+            </p>
+          </div>
+          <div className="bg-white border border-rule rounded-2xl p-5 flex flex-col justify-between hover:border-leaf transition-colors group">
+            <p className="text-xs text-gray-500 font-medium">Predictability</p>
+            <p className={`font-display font-bold text-2xl mt-3 ${insights?.predictability === 'high' ? 'text-leaf' : insights?.predictability === 'medium' ? 'text-amber-500' : insights?.predictability === 'low' ? 'text-red-500' : 'text-gray-400'}`}>
+              {insights?.predictability ? (insights.predictability.charAt(0).toUpperCase() + insights.predictability.slice(1)) : 'N/A'}
+            </p>
+          </div>
+          <div className="bg-white border border-rule rounded-2xl p-5 flex flex-col justify-between hover:border-leaf transition-colors group">
+            <p className="text-xs text-gray-500 font-medium">Credit Score</p>
+            <p className={`font-display font-bold text-2xl mt-3 ${scoreColor}`}>
+              {score} <span className="text-sm font-medium text-gray-400">/ 100</span>
+            </p>
+          </div>
+        </div>
+
         {/* Score + Offer/Advance side by side on desktop */}
         <div className="grid md:grid-cols-2 gap-6 items-start">
           <ScoreCard score={score} breakdown={breakdown} scoreColor={scoreColor} ringColor={ringColor} />
@@ -123,43 +158,44 @@ export default function Dashboard() {
               error={error}
             />
           ) : (
-            <div className="bg-white border border-rule rounded-2xl p-6">
-              <h3 className="font-display font-semibold text-ink mb-2">No advance offer yet</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">
+            <div className="bg-white border border-rule rounded-2xl p-6 flex flex-col justify-center h-full">
+              <h3 className="font-display font-semibold text-ink mb-2">Path to Eligibility</h3>
+              <p className="text-gray-500 text-sm leading-relaxed mb-6">
                 {data.reason === "insufficient_history"
-                  ? "Not enough transaction history yet. Keep selling on Nomba and check back in 30 days — the score builds itself."
+                  ? "Not enough transaction history yet. Keep selling on Nomba and check back in 30 days."
                   : data.reason === "insufficient_days"
-                  ? "You need at least 7 active trading days in your history to score. Keep transacting and check back soon."
-                  : "Your score is below the 40-point minimum for an advance. Adding regular buyers to your ledger below is the fastest way to raise it."}
+                  ? "You need at least 7 active trading days in your history to score. Keep transacting."
+                  : "Your score is below the 40-point minimum for an advance. Improve your buyer diversity and payment consistency."}
               </p>
+              
+              <div className="space-y-4">
+                <div className="flex flex-col gap-1">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span className={score >= 40 ? "text-leaf" : "text-gray-500"}>Minimum Score (40)</span>
+                    <span className={score >= 40 ? "text-leaf" : "text-gray-900"}>{score} / 40</span>
+                  </div>
+                  <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                    <div className={`h-full transition-all ${score >= 40 ? 'bg-leaf' : 'bg-amber-400'}`} style={{ width: `${Math.min((score / 40) * 100, 100)}%` }} />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <div className="flex justify-between text-xs font-medium">
+                    <span className={(insights?.buyerCount || 0) >= 3 ? "text-leaf" : "text-gray-500"}>Active Buyers (3 needed)</span>
+                    <span className={(insights?.buyerCount || 0) >= 3 ? "text-leaf" : "text-gray-900"}>{insights?.buyerCount || 0} / 3</span>
+                  </div>
+                  <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                    <div className={`h-full transition-all ${(insights?.buyerCount || 0) >= 3 ? 'bg-leaf' : 'bg-amber-400'}`} style={{ width: `${Math.min(((insights?.buyerCount || 0) / 3) * 100, 100)}%` }} />
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
 
-        {/* Account balance + Mandate status — compact info row */}
-        {(balance || (mandateStatus?.hasMandateId)) && (
+        {/* Mandate status — compact info row */}
+        {mandateStatus?.hasMandateId && (
           <div className="grid md:grid-cols-2 gap-6">
-            {balance && (
-              <div className="bg-white border border-rule rounded-2xl p-5 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
-                  <span className="text-leaf text-lg">₦</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-gray-400">Account balance</p>
-                  <p className="font-display font-bold text-ink text-lg tnum">
-                    ₦{(Number(balance.availableBalance ?? 0) / 100).toLocaleString()}
-                  </p>
-                </div>
-                {balance.ledgerBalance != null && balance.ledgerBalance !== balance.availableBalance && (
-                  <div className="text-right">
-                    <p className="text-[10px] text-gray-400">Ledger</p>
-                    <p className="text-xs text-gray-500 tnum">
-                      ₦{(Number(balance.ledgerBalance) / 100).toLocaleString()}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
 
             {mandateStatus?.hasMandateId && (
               <div className="bg-white border border-rule rounded-2xl p-5 flex items-center gap-4">
@@ -259,7 +295,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        <BuyerInsights merchantId={merchantId} />
+        <BuyerInsights insights={insights} />
       </div>
     </DashboardLayout>
   );

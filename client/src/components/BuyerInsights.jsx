@@ -17,24 +17,11 @@ function formatNaira(n) {
   return `₦${Number(n).toLocaleString()}`;
 }
 
-export default function BuyerInsights({ merchantId }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    api(`/buyers/insights/${merchantId}`)
-      .then((r) => r.json())
-      .then((d) => {
-        setData(d);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [merchantId]);
-
-  // Don't render anything if no buyer data or still loading
-  if (loading || !data || data.buyerCount === 0) return null;
+export default function BuyerInsights({ insights: data }) {
+  // Don't render anything if no buyer data
+  if (!data || data.buyerCount === 0) return null;
   // Need at least some payments to show insights
-  if (data.reliability.length === 0 && data.timeline.length === 0) return null;
+  if (data.reliability?.length === 0 && data.timeline?.length === 0) return null;
 
   return (
     <div className="space-y-6">
