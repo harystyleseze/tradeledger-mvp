@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import api from "../api.js";
-import AppNav from "../components/AppNav.jsx";
+import DashboardLayout from "../components/DashboardLayout.jsx";
 
 export default function Wallet() {
   const { merchantId } = useParams();
@@ -223,39 +223,17 @@ export default function Wallet() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-paper">
-        <AppNav />
-        <div className="max-w-5xl mx-auto px-4 md:px-6 py-8 space-y-6 animate-pulse">
+      <DashboardLayout merchantId={merchantId} merchantName={merchant?.name}>
+        <div className="space-y-6 animate-pulse">
           <div className="h-40 bg-white border border-rule rounded-2xl" />
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-paper">
-      <AppNav
-        navLinks={
-          <>
-            <Link to={`/dashboard/${merchantId}`} className="text-gray-500 hover:text-ink transition-colors">Dashboard</Link>
-            <Link to={`/dashboard/${merchantId}/payments`} className="text-gray-500 hover:text-ink transition-colors">Payments</Link>
-            <Link to={`/dashboard/${merchantId}/wallet`} className="text-ink font-medium">Wallet</Link>
-            <Link to={`/dashboard/${merchantId}/settings`} className="text-gray-500 hover:text-ink transition-colors">Settings</Link>
-          </>
-        }
-        right={
-          <>
-            {merchant?.name && (
-              <span className="text-gray-500 hidden sm:block">{merchant.name}</span>
-            )}
-            <Link to="/admin" className="text-gray-400 hover:text-ink">
-              Lender portal →
-            </Link>
-          </>
-        }
-      />
-
-      <div className="max-w-5xl mx-auto px-4 md:px-6 py-8">
+    <DashboardLayout merchantId={merchantId} merchantName={merchant?.name}>
+      <div>
         <div className="mb-6">
           <h1 className="font-display text-2xl font-bold text-ink">Wallet & Services</h1>
           <p className="text-gray-500 text-sm mt-1">Manage your platform balance, withdraw funds, and pay bills.</p>
@@ -543,6 +521,6 @@ export default function Wallet() {
           </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

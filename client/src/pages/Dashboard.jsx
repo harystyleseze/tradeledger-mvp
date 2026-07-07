@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate, Link } from "react-router-dom";
 import api from "../api.js";
-import AppNav from "../components/AppNav.jsx";
+import DashboardLayout from "../components/DashboardLayout.jsx";
 import ScoreCard from "../components/ScoreCard.jsx";
 import AdvanceOffer from "../components/AdvanceOffer.jsx";
 import RepaymentChart from "../components/RepaymentChart.jsx";
@@ -9,7 +9,7 @@ import BuyerInsights from "../components/BuyerInsights.jsx";
 
 function Skeleton() {
   return (
-    <div className="max-w-5xl mx-auto px-4 md:px-6 py-8 space-y-6 animate-pulse">
+    <div className="space-y-6 animate-pulse">
       <div className="grid md:grid-cols-2 gap-6">
         <div className="h-56 bg-white border border-rule rounded-2xl" />
         <div className="h-56 bg-white border border-rule rounded-2xl" />
@@ -88,10 +88,9 @@ export default function Dashboard() {
 
   if (!data) {
     return (
-      <div className="min-h-screen bg-paper">
-        <AppNav />
+      <DashboardLayout merchantId={merchantId} merchantName={merchantName}>
         <Skeleton />
-      </div>
+      </DashboardLayout>
     );
   }
 
@@ -108,39 +107,8 @@ export default function Dashboard() {
   ].filter(({ key }) => breakdown[key] !== undefined) : [];
 
   return (
-    <div className="min-h-screen bg-paper">
-      <AppNav
-        navLinks={
-          <>
-            <Link to={`/dashboard/${merchantId}`} className="text-ink font-medium">Dashboard</Link>
-            <Link to={`/dashboard/${merchantId}/payments`} className="text-gray-500 hover:text-ink transition-colors">Payments</Link>
-            <Link to={`/dashboard/${merchantId}/wallet`} className="text-gray-500 hover:text-ink transition-colors">Wallet</Link>
-            <Link to={`/dashboard/${merchantId}/settings`} className="text-gray-500 hover:text-ink transition-colors">Settings</Link>
-          </>
-        }
-        right={
-          <>
-            {merchantName && (
-              <span className="text-gray-500 hidden sm:block">{merchantName}</span>
-            )}
-            <Link to="/admin" className="text-gray-400 hover:text-ink">
-              Lender portal →
-            </Link>
-            <button
-              onClick={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("merchantId");
-                navigate("/");
-              }}
-              className="text-gray-400 hover:text-red-500 text-sm font-medium ml-4 transition-colors"
-            >
-              Log Out
-            </button>
-          </>
-        }
-      />
-
-      <div className="max-w-5xl mx-auto px-4 md:px-6 py-8 space-y-6">
+    <DashboardLayout merchantId={merchantId} merchantName={merchantName}>
+      <div className="space-y-6">
         {/* Score + Offer/Advance side by side on desktop */}
         <div className="grid md:grid-cols-2 gap-6 items-start">
           <ScoreCard score={score} breakdown={breakdown} scoreColor={scoreColor} ringColor={ringColor} />
@@ -293,6 +261,6 @@ export default function Dashboard() {
 
         <BuyerInsights merchantId={merchantId} />
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

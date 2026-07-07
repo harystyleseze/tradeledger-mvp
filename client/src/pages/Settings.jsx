@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "../api.js";
-import AppNav from "../components/AppNav.jsx";
+import DashboardLayout from "../components/DashboardLayout.jsx";
 import SearchableSelect from "../components/SearchableSelect.jsx";
 
 const FALLBACK_BANKS = [
@@ -84,29 +84,17 @@ export default function Settings() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-paper">
-        <AppNav />
-        <div className="max-w-3xl mx-auto px-4 md:px-6 py-8">
+      <DashboardLayout merchantId={merchantId} merchantName={form.name}>
+        <div className="max-w-3xl mx-auto py-8">
           <div className="h-64 bg-white border border-rule rounded-2xl animate-pulse" />
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-paper">
-      <AppNav
-        navLinks={
-          <>
-            <button onClick={() => navigate(`/dashboard/${merchantId}`)} className="text-gray-500 hover:text-ink transition-colors">Dashboard</button>
-            <button onClick={() => navigate(`/dashboard/${merchantId}/payments`)} className="text-gray-500 hover:text-ink transition-colors">Payments</button>
-            <button onClick={() => navigate(`/dashboard/${merchantId}/wallet`)} className="text-gray-500 hover:text-ink transition-colors">Wallet</button>
-            <span className="text-ink font-medium">Settings</span>
-          </>
-        }
-      />
-
-      <div className="max-w-3xl mx-auto px-4 md:px-6 py-8 space-y-6">
+    <DashboardLayout merchantId={merchantId} merchantName={form.name}>
+      <div className="max-w-3xl mx-auto space-y-6">
         <div>
           <h1 className="font-display font-bold text-2xl text-ink">Profile Settings</h1>
           <p className="text-gray-500 text-sm mt-1">
@@ -203,6 +191,6 @@ export default function Settings() {
           </div>
         </form>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
