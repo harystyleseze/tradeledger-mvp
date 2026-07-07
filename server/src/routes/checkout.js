@@ -22,7 +22,7 @@ router.post("/link", async (req, res) => {
   try {
     const data = await createCheckoutOrder({
       orderReference,
-      amount: Math.round(Number(amount) * 100), // Convert NGN to kobo
+      amount: Number(amount), // Nomba checkout expects NGN directly
       customerEmail: customerEmail || "anonymous@example.com",
       customerName: customerName || "Anonymous Buyer",
     });

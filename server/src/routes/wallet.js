@@ -82,7 +82,7 @@ router.post("/airtime/:merchantId", authenticateToken, attachMerchant, async (re
 router.get("/plans/data/:network", async (req, res) => {
   try {
     const plans = await getDataPlans(req.params.network);
-    res.json(plans);
+    res.json({ data: plans });
   } catch (e) {
     // Sandbox API is throwing 500, provide mock fallback plans
     res.json({
@@ -115,7 +115,7 @@ router.post("/data/:merchantId", authenticateToken, attachMerchant, async (req, 
 router.get("/providers/electricity", async (req, res) => {
   try {
     const providers = await getElectricityProviders();
-    res.json(providers);
+    res.json({ data: providers });
   } catch (e) {
     res.json({
       data: [
@@ -159,7 +159,7 @@ router.post("/electricity/:merchantId", authenticateToken, attachMerchant, async
 router.get("/providers/cabletv", async (req, res) => {
   try {
     const providers = await getCableTvProviders();
-    res.json(providers);
+    res.json({ data: providers });
   } catch (e) {
     res.json({
       data: [

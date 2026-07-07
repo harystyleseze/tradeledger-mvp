@@ -12,7 +12,7 @@ export async function paymentSuccess(event) {
     await db.checkoutPayment.create({
       data: {
         merchantId,
-        amount,
+        amount: Math.round(Number(amount) * 100), // Webhook sends NGN, store as kobo
         orderId,
         webhookRequestId: event.requestId,
       },
